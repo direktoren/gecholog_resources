@@ -1,0 +1,160 @@
+# Run detached
+# docker-compose -f docker/bundles/gecholog-ek-dev/docker-compose.yml up -d
+
+# Setup status
+# docker logs gl-ek-dev-setup-only
+
+# Remove with volumes
+# docker-compose -f docker/bundles/gecholog-ek-dev/docker-compose.yml down -v
+
+
+version: "2.2"
+
+services:
+  gl-ek-dev-setup:
+    image: gecholog/gl-ek-dev-setup:latest
+    container_name: gl-ek-dev-setup-only
+    volumes:
+      - certs:/config/certs:z
+      - configs:/app/conf:z
+    user: "0"
+    command: >
+      sh -c '
+        echo "By using this software, you acknowledge and agree to the following terms and conditions: 1. This software is provided \"as is,\" without any warranties or guarantees, express or implied. You use it at your own risk. 2. The authors and contributors of this software shall not be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services, loss of use, data, or profits, or business interruption) arising in any way out of the use of this software. 3. You are expressly prohibited from: a. Reverse engineering, decompiling, disassembling, or attempting to discover the source code or algorithms of this software. b. Distributing, sublicensing, or making this software available to third parties without the prior written consent of the software owner. c. Copying, reproducing, or modifying this software or any part thereof, except as expressly permitted under applicable law. d. Engaging in any activity that infringes upon the intellectual property rights, copyrights, or trademarks associated with this software. 4. This is a licensed software to Artificial Solutions, and usage is conditioned on a valid license agreement with Artificial Solutions. 5. This software may include third-party libraries or components, each subject to its own licensing terms and conditions. Please review the licenses associated with these components for details. 6. You are solely responsible for complying with all applicable laws, regulations, and licensing agreements when using this software. 7. This disclaimer shall apply to the fullest extent permitted by law. If you do not agree to these terms or do not have a valid license agreement with Artificial Solutions, you should not use this software."
+        unzip -o config/certs/certs.zip -d config/certs && echo "Step [1/5]: certs PASSED" || (echo "Step [1/5]: certs FAILED" && exit 1);
+        cat config/certs/elasticsearch/elasticsearch.crt config/certs/ca/ca.crt > config/certs/elasticsearch/elasticsearch.chain.pem;
+        echo "Waiting for Elasticsearch availability";
+        until curl -s --cacert config/certs/ca/ca.crt https://gl-elasticsearch:9200 | grep -q "missing authentication credentials"; do sleep 30; done && echo "Step [2/5]: elastic PASSED" || (echo "Step [2/5]: elastic FAILED" && exit 1);
+        echo "Setting kibana_system password";
+        until curl -s -X POST --cacert config/certs/ca/ca.crt -u elastic:gecholog -H "Content-Type: application/json" https://gl-elasticsearch:9200/_security/user/kibana_system/_password -d "{\"password\":\"gecholog\"}" | grep -q "^{}"; do sleep 10; done && echo "Step [3/5]: kibana pwd PASSED" || (echo "Step [3/5]: kibana pwd FAILED" && exit 1);
+        echo "Waiting for Kibana availability"; 
+        until curl -s --cacert config/certs/ca/ca.crt https://gl-kibana:5601/api/status | grep -q "available"; do sleep 30; done && echo "Step [4/5]: kibana up PASSED" || (echo "Step [4/5]: kibana up FAILED" && exit 1);
+        echo "Populating dashboard";    
+        until curl -s --cacert config/certs/ca/ca.crt -u elastic:gecholog -X POST "https://gl-kibana:5601/api/saved_objects/_import" -H "kbn-xsrf: true" -F file=@kibana/export.ndjson | grep -q "success\":true"; do sleep 10; done && echo "Step [5/5]: kibana dashboard PASSED" || (echo "Step [5/5]: kibana dashboard FAILED" && exit 1);
+      '
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f config/certs/elasticsearch/elasticsearch.crt ]"]
+      interval: 1s
+      timeout: 5s
+      retries: 120
+
+  gecholog:
+    depends_on:
+      gl-ek-dev-setup:
+        condition: service_healthy
+    image: gecholog/gecholog:latest
+    container_name: gecholog
+    volumes:
+      - certs:/config/certs
+      - configs:/app/conf
+    ports:
+      - 5380:5380
+      - 4222:4222
+      - 6222:6222
+      - 8222:8222
+    healthcheck:
+      test: ps | grep '/gl -o /app/conf/gl_config.json' | grep -v grep -q
+      interval: 1s
+      timeout: 1s
+      retries: 120
+
+  nlp-processor:
+    depends_on:
+      gecholog:
+        condition: service_healthy
+    image: gecholog/gl-nlp-spacy-entities:latest
+    container_name: nlp-processor
+    healthcheck:
+      test: ps -x | grep 'python3 spacyentities.py' | grep -v grep -q
+      interval: 1s
+      timeout: 1s
+      retries: 120
+
+  elasticsearch:
+    depends_on:
+      nlp-processor:
+        condition: service_healthy
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: gl-elasticsearch
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - esdata01:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    environment:
+      - node.name=gl-elasticsearch
+      - cluster.name=gecholog-ek-stack
+      - ELASTIC_PASSWORD=gecholog
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/elasticsearch/elasticsearch.key
+      - xpack.security.http.ssl.certificate=certs/elasticsearch/elasticsearch.chain.pem
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.http.ssl.verification_mode=certificate
+      - xpack.security.http.ssl.client_authentication=optional
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/elasticsearch/elasticsearch.key
+      - xpack.security.transport.ssl.certificate=certs/elasticsearch/elasticsearch.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.client_authentication=optional
+      - xpack.license.self_generated.type=basic
+    mem_limit: 1073741824
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 120
+
+  kibana:
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    image: docker.elastic.co/kibana/kibana:8.10.2
+    container_name: gl-kibana
+    volumes:
+      - certs:/usr/share/kibana/config/certs:z
+      - kibanadata:/usr/share/kibana/data
+    ports:
+      - 5601:5601
+    environment:
+      - SERVER_NAME=gl-kibana
+      - ELASTICSEARCH_HOSTS=https://gl-elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=gecholog
+      - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
+      - SERVER_SSL_ENABLED=true
+      - SERVER_SSL_CERTIFICATE=config/certs/kibana/kibana.crt
+      - SERVER_SSL_KEY=config/certs/kibana/kibana.key
+      - SERVER_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
+    mem_limit: 1073741824
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:5601/api/status | grep -q 'available'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 120
+
+
+volumes:
+  certs:
+    driver: local
+  configs:
+    driver: local
+  esdata01:
+    driver: local
+  kibanadata:
+    driver: local
