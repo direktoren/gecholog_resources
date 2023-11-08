@@ -1,3 +1,6 @@
+# This is only for local exploration & dev purpose.
+# Do not use in production!
+
 # Run detached
 # docker-compose -f docker/bundles/gecholog-ek-dev/docker-compose.yml up -d
 
