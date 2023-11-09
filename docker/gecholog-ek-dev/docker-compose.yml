@@ -1,13 +1,13 @@
 # Build and run the gecholog-ek-dev bundle
 #
 # Run detached
-# docker-compose -f docker/bundles/gecholog-ek-dev/docker-compose.yml up -d
+# docker-compose -f docker/gecholog-ek-dev/docker-compose.yml up -d
 
 # Setup status
 # docker logs gl-ek-dev-setup-only
 
 # Remove with volumes
-# docker-compose -f docker/bundles/gecholog-ek-dev/docker-compose.yml down -v
+# docker-compose -f docker/gecholog-ek-dev/docker-compose.yml down -v
 
 
 version: "2.2"
