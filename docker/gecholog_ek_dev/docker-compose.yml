@@ -1,4 +1,4 @@
-# Inspired by https://github.com/peasead/elastic-container
+# Build and run the gecholog-ek-dev bundle
 #
 # Run detached
 # docker-compose -f docker/bundles/gecholog-ek-dev/docker-compose.yml up -d
@@ -23,20 +23,19 @@ services:
     command: >
       sh -c '
         echo "By using gecholog you approve our license terms on docs.gecholog.ai. By using this software, you acknowledge and agree to the following terms and conditions: 1. This software is provided \"as is,\" without any warranties or guarantees, express or implied. You use it at your own risk. 2. The authors and contributors of this software shall not be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services, loss of use, data, or profits, or business interruption) arising in any way out of the use of this software. 3. You are expressly prohibited from: a. Reverse engineering, decompiling, disassembling, or attempting to discover the source code or algorithms of this software. b. Distributing, sublicensing, or making this software available to third parties without the prior written consent of the software owner. c. Copying, reproducing, or modifying this software or any part thereof, except as expressly permitted under applicable law. d. Engaging in any activity that infringes upon the intellectual property rights, copyrights, or trademarks associated with this software. 4. This is a licensed software to Artificial Solutions, and usage is conditioned on a valid license agreement with Artificial Solutions. 5. This software may include third-party libraries or components, each subject to its own licensing terms and conditions. Please review the licenses associated with these components for details. 6. You are solely responsible for complying with all applicable laws, regulations, and licensing agreements when using this software. 7. This disclaimer shall apply to the fullest extent permitted by law. If you do not agree to these terms or do not have a valid license agreement with Artificial Solutions, you should not use this software."
-        unzip -o config/certs/certs.zip -d config/certs && echo "Step [1/5]: certs PASSED" || (echo "Step [1/5]: certs FAILED" && exit 1);
+        unzip -o config/certs/certs.zip -d config/certs && echo "Step [1/6]: certs PASSED" || (echo "Step [1/6]: certs FAILED" && exit 1);
         cat config/certs/elasticsearch/elasticsearch.crt config/certs/ca/ca.crt > config/certs/elasticsearch/elasticsearch.chain.pem;
         echo "Waiting for Elasticsearch availability";
-        until curl -s --cacert config/certs/ca/ca.crt https://gl-elasticsearch:9200 | grep -q "missing authentication credentials"; do sleep 30; done && echo "Step [2/5]: elastic PASSED" || (echo "Step [2/5]: elastic FAILED" && exit 1);
+        until curl -s --cacert config/certs/ca/ca.crt https://gl-elasticsearch:9200 | grep -q "missing authentication credentials"; do sleep 30; done && echo "Step [2/6]: elastic PASSED" || (echo "Step [2/6]: elastic FAILED" && exit 1);
         echo "Setting kibana_system password";
-        until curl -s -X POST --cacert config/certs/ca/ca.crt -u elastic:gecholog -H "Content-Type: application/json" https://gl-elasticsearch:9200/_security/user/kibana_system/_password -d "{\"password\":\"gecholog\"}" | grep -q "^{}"; do sleep 10; done && echo "Step [3/5]: kibana pwd PASSED" || (echo "Step [3/5]: kibana pwd FAILED" && exit 1);
+        until curl -s -X POST --cacert config/certs/ca/ca.crt -u elastic:gecholog -H "Content-Type: application/json" https://gl-elasticsearch:9200/_security/user/kibana_system/_password -d "{\"password\":\"gecholog\"}" | grep -q "^{}"; do sleep 10; done && echo "Step [3/6]: kibana pwd PASSED" || (echo "Step [3/6]: kibana pwd FAILED" && exit 1);
+        echo "Creating coburn1 index";
+        until curl -s -XPUT --cacert config/certs/ca/ca.crt -u elastic:gecholog "https://gl-elasticsearch:9200/coburn1" -H "Content-Type: application/json" -d @elastic/index.json | grep -q "acknowledged\":true"; do sleep 10; done && echo "Step [4/6]: elastic index PASSED" || (echo "Step [4/6]: elastic index FAILED" && exit 1);
         echo "Waiting for Kibana availability"; 
-        until curl -s --cacert config/certs/ca/ca.crt https://gl-kibana:5601/api/status | grep -q "available"; do sleep 30; done && echo "Step [4/5]: kibana up PASSED" || (echo "Step [4/5]: kibana up FAILED" && exit 1);
+        until curl -s --cacert config/certs/ca/ca.crt https://gl-kibana:5601/api/status | grep -q "available"; do sleep 30; done && echo "Step [5/6]: kibana up PASSED" || (echo "Step [5/6]: kibana up FAILED" && exit 1);
         echo "Populating dashboard";    
-        until curl -s --cacert config/certs/ca/ca.crt -u elastic:gecholog -X POST "https://gl-kibana:5601/api/saved_objects/_import" -H "kbn-xsrf: true" -F file=@kibana/export.ndjson | grep -q "success\":true"; do sleep 10; done && echo "Step [5/5]: kibana dashboard PASSED" || (echo "Step [5/5]: kibana dashboard FAILED" && exit 1);
+        until curl -s --cacert config/certs/ca/ca.crt -u elastic:gecholog -X POST "https://gl-kibana:5601/api/saved_objects/_import" -H "kbn-xsrf: true" -F file=@kibana/export.ndjson | grep -q "success\":true"; do sleep 10; done && echo "Step [6/6]: kibana dashboard PASSED" || (echo "Step [6/6]: kibana dashboard FAILED" && exit 1);
       '
-# until curl -s --cacert config/certs/ca/ca.crt -u elastic:gecholog -X POST "https://gl-kibana:5601/api/saved_objects/_import" -H "kbn-xsrf: true" --form file=@kibana/export.ndjson | grep -q "success\":true"; do sleep 10; done ;
-# curl -X POST -H "kbn-xsrf: true" "http://gl-kibana:5601/api/saved_objects/_import" --data-binary @kibana/export.ndjson
-# curl -s --cacert config/certs/ca/ca.crt -u elastic:gecholog -X POST "https://gl-kibana:5601/api/saved_objects/_import" -H "kbn-xsrf: true" --form file=@kibana/export.ndjson | grep -q "success\":true" && echo "Step [5/5]: kibana dashboard PASSED" || (echo "Step [5/5]: kibana dashboard FAILED" && exit 1);
     healthcheck:
       test: ["CMD-SHELL", "[ -f config/certs/elasticsearch/elasticsearch.crt ]"]
       interval: 1s
@@ -130,7 +129,6 @@ services:
     volumes:
       - certs:/usr/share/kibana/config/certs:z
       - kibanadata:/usr/share/kibana/data
- #     - ./kibana.yml:/usr/share/kibana/config/kibana.yml:Z
     ports:
       - 5601:5601
     environment:
