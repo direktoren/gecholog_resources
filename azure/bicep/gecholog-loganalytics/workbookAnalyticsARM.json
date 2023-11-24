@@ -1,0 +1,50 @@
+{
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workbookDisplayName": {
+      "type": "string",
+      "defaultValue": "gecholog Analytics E1",
+      "metadata": {
+        "description": "The friendly name for the workbook that is used in the Gallery or Saved List.  This name must be unique within a resource group."
+      }
+    },
+    "workbookType": {
+      "type": "string",
+      "defaultValue": "workbook",
+      "metadata": {
+        "description": "The gallery that the workbook will been shown under. Supported values include workbook, tsg, etc. Usually, this is 'workbook'"
+      }
+    },
+    "workbookId": {
+      "type": "string",
+      "defaultValue": "[newGuid()]",
+      "metadata": {
+        "description": "The unique guid for this workbook instance"
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('workbookId')]",
+      "type": "microsoft.insights/workbooks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2022-04-01",
+      "dependsOn": [],
+      "kind": "shared",
+      "properties": {
+        "displayName": "[parameters('workbookDisplayName')]",
+        "serializedData": "[concat('{\"version\":\"Notebook/1.0\",\"items\":[{\"type\":9,\"content\":{\"version\":\"KqlParameterItem/1.0\",\"parameters\":[{\"id\":\"f134fe05-cee2-486d-b05e-c076f7cc4b0c\",\"version\":\"KqlParameterItem/1.0\",\"name\":\"Router\",\"type\":2,\"multiSelect\":true,\"quote\":\"'\",\"delimiter\":\",\",\"query\":\"gecholog_CL\\n| distinct request_gl_path_s\",\"typeSettings\":{\"additionalResourceOptions\":[\"value::all\"],\"showDefault\":false},\"timeContext\":{\"durationMs\":86400000},\"defaultValue\":\"value::all\",\"queryType\":0,\"resourceType\":\"microsoft.operationalinsights/workspaces\",\"value\":[\"value::all\"]},{\"id\":\"ad6a2776-46a7-4d13-8ab4-517863acfe1c\",\"version\":\"KqlParameterItem/1.0\",\"name\":\"HeaderPrompt\",\"type\":9,\"multiSelect\":true,\"quote\":\"'\",\"delimiter\":\",\",\"query\":\"gecholog_CL\\n| distinct request_ingress_headers_Prompt_s\",\"timeContext\":{\"durationMs\":172800000},\"defaultValue\":\"value::all\",\"queryType\":0,\"resourceType\":\"microsoft.operationalinsights/workspaces\",\"value\":[\"\",\"[\\\"testprompt2\\\"]\",\"[\\\"testprompt1\\\"]\"]},{\"id\":\"499523ea-2721-4db9-b1dc-6cec7e0f434c\",\"version\":\"KqlParameterItem/1.0\",\"name\":\"Deployment\",\"type\":2,\"multiSelect\":true,\"quote\":\"'\",\"delimiter\":\",\",\"query\":\"gecholog_CL\\n| distinct request_ingress_subpath_s\",\"typeSettings\":{\"additionalResourceOptions\":[\"value::all\"],\"showDefault\":false},\"timeContext\":{\"durationMs\":172800000},\"defaultValue\":\"value::all\",\"queryType\":0,\"resourceType\":\"microsoft.operationalinsights/workspaces\",\"value\":[\"value::all\"]}],\"style\":\"pills\",\"queryType\":0,\"resourceType\":\"microsoft.operationalinsights/workspaces\"},\"name\":\"parameters - 2\"},{\"type\":3,\"content\":{\"version\":\"KqlItem/1.0\",\"query\":\"let pathValues = dynamic([{Router}]);\\nlet promptValues = dynamic([{HeaderPrompt}]);\\nlet deploymentValues = dynamic([{Deployment}]);\\ngecholog_CL\\n| where (request_gl_path_s in (pathValues) or pathValues[0] == \\\"All\\\")\\n| where (request_ingress_headers_Prompt_s in (promptValues) or promptValues[0] == \\\"All\\\")\\n| where (request_ingress_subpath_s in (deploymentValues) or deploymentValues[0] == \\\"All\\\")\\n| summarize \\n    AvgPromptTokens = round(avg(toreal(response_token_count_prompt_tokens_d)), 1), \\n    AvgCompletionTokens = round(avg(toreal(response_token_count_completion_tokens_d)), 1), \\n    AvgTotalTokens = round(avg(toreal(response_token_count_total_tokens_d)), 1)\\n\\n\\n\\n\\n\\n\\n\\n\",\"size\":4,\"timeContext\":{\"durationMs\":172800000},\"queryType\":0,\"resourceType\":\"microsoft.operationalinsights/workspaces\",\"tileSettings\":{\"showBorder\":false}},\"name\":\"query - 2\"},{\"type\":3,\"content\":{\"version\":\"KqlItem/1.0\",\"query\":\"let pathValues = dynamic([{Router}]);\\nlet promptValues = dynamic([{HeaderPrompt}]);\\nlet deploymentValues = dynamic([{Deployment}]);\\ngecholog_CL\\n| where (request_gl_path_s in (pathValues) or pathValues[0] == \\\"All\\\")\\n| where (request_ingress_headers_Prompt_s in (promptValues) or promptValues[0] == \\\"All\\\")\\n| where (request_ingress_subpath_s in (deploymentValues) or deploymentValues[0] == \\\"All\\\")\\n| extend IngressEgressTime = todatetime(ingress_egress_timer_start_s) // Parse the string to datetime\\n| summarize \\n    TotalPromptTokens = sum(toreal(response_token_count_prompt_tokens_d)), \\n    TotalCompletionTokens = sum(toreal(response_token_count_completion_tokens_d))\\n    by IngressEgressTime // Use the parsed datetime column\\n| project TimeGenerated = IngressEgressTime, TotalPromptTokens, TotalCompletionTokens // Rename the column for consistency\\n| render columnchart with (kind=stacked, title=\\\"Token Count Over Time\\\", xcolumn=TimeGenerated, ycolumns=TotalPromptTokens, TotalCompletionTokens, ytitle=\\\"Total Tokens\\\", xtitle=\\\"Time\\\")\\n\\n\\n\",\"size\":0,\"timeContext\":{\"durationMs\":14400000},\"queryType\":0,\"resourceType\":\"microsoft.operationalinsights/workspaces\",\"visualization\":\"barchart\",\"tileSettings\":{\"showBorder\":false},\"graphSettings\":{\"type\":0}},\"name\":\"query - 3\"},{\"type\":3,\"content\":{\"version\":\"KqlItem/1.0\",\"query\":\"gecholog_CL\\n| getschema\",\"size\":0,\"timeContext\":{\"durationMs\":86400000},\"queryType\":0,\"resourceType\":\"microsoft.operationalinsights/workspaces\"},\"name\":\"query - 3\"}],\"isLocked\":false,\"fallbackResourceIds\":[\"',[parameters('workbookSourceId')],'\"]}')]",
+        "version": "1.0",
+        "sourceId": "[parameters('workbookSourceId')]",
+        "category": "[parameters('workbookType')]"
+      }
+    }
+  ],
+  "outputs": {
+    "workbookId": {
+      "type": "string",
+      "value": "[resourceId( 'microsoft.insights/workbooks', parameters('workbookId'))]"
+    }
+  },
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#"
+}
