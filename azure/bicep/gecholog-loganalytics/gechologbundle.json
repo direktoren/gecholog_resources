@@ -9,6 +9,12 @@
     }
   },
   "parameters": {
+    "aiServiceApiBase": {
+      "type": "string",
+      "metadata": {
+        "description": "URL of the AI Service API"
+      }
+    },
     "storageAccountName": {
       "type": "string",
       "defaultValue": "gechologstorage",
@@ -44,10 +50,18 @@
         "description": "sku"
       }
     },
-    "aiServiceApiBase": {
+    "nats2logLoggerSubtopic": {
       "type": "string",
+      "defaultValue": ".logger",
       "metadata": {
-        "description": "URL of the AI Service API"
+        "description": "Set to .logger to activate nats2log"
+      }
+    },
+    "nats2fileLoggerSubtopic": {
+      "type": "string",
+      "defaultValue": ".logger",
+      "metadata": {
+        "description": "Set to .logger to activate nats2file"
       }
     },
     "name": {
@@ -214,6 +228,14 @@
                 {
                   "name": "AISERVICE_API_BASE",
                   "value": "[parameters('aiServiceApiBase')]"
+                },
+                {
+                  "name": "NATS2LOG_LOGGER_SUBTOPIC",
+                  "value": "[parameters('nats2logLoggerSubtopic')]"
+                },
+                {
+                  "name": "NATS2FILE_LOGGER_SUBTOPIC",
+                  "value": "[parameters('nats2fileLoggerSubtopic')]"
                 },
                 {
                   "name": "AZURE_LOG_ANALYTICS_WORKSPACE_ID",
