@@ -231,11 +231,13 @@
               "volumeMounts": [
                 {
                   "name": "conf",
-                  "mountPath": "/app/conf"
+                  "mountPath": "/app/conf",
+                  "readOnly": false
                 },
                 {
                   "name": "log",
-                  "mountPath": "/app/log"
+                  "mountPath": "/app/log",
+                  "readOnly": false
                 }
               ]
             }
