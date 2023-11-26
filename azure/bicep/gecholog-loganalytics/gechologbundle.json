@@ -261,7 +261,7 @@
               "shareName": "[parameters('confFileShareName')]",
               "storageAccountName": "[parameters('storageAccountName')]",
               "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2021-08-01').keys[0].value]",
-              "readOnly": true
+              "readOnly": false
             }
           },
           {
