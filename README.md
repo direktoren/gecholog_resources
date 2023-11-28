@@ -8,3 +8,4 @@ Visit [gecholog.ai](https://www.gecholog.ai) and [docs.gecholog.ai](https://docs
 - Custom Dockerfile to build `gecholog` container with your own settings
 - Processor templates
     - python spacy_entities example
+    - golang character_count example
