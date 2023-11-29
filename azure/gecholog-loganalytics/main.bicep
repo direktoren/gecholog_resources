@@ -42,7 +42,7 @@ param nats2fileLoggerSubTopic string = '.logger'
 @description('DNS name prefix label for used to create FQDN')
 param dnsLabel string = 'gecholog'
 var uniqueStr = uniqueString(resourceGroup().id)
-var dnsNameLabelUnique = '${dnsLabel}_${uniqueStr}'
+var dnsNameLabelUnique = '${dnsLabel}-${uniqueStr}'
 
 @description('Port to open on the container and the public IP address.')
 param port int = 5380
