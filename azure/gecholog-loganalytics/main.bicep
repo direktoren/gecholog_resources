@@ -25,7 +25,7 @@ param logSpaceName string = 'gechologspace'
 param sku string = 'PerGB2018'
 
 @description('Name for the container group')
-param name string = 'gecholog'
+param containerGroupName string = 'gecholog'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
@@ -40,9 +40,9 @@ param nats2logLoggerSubTopic string = '.logger'
 param nats2fileLoggerSubTopic string = '.logger'
 
 @description('DNS name prefix label for used to create FQDN')
-param domain string = 'gecholog'
+param dnsLabel string = 'gecholog'
 var uniqueStr = uniqueString(resourceGroup().id)
-var dnsNameLabel = '${domain}_${uniqueStr}'
+var dnsNameLabelUnique = '${dnsLabel}_${uniqueStr}'
 
 @description('Port to open on the container and the public IP address.')
 param port int = 5380
@@ -151,12 +151,12 @@ resource workbookId_resource 'microsoft.insights/workbooks@2022-04-01' = {
 // Setup containers
 
 resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
-  name: name
+  name: containerGroupName
   location: location
   properties: {
     containers: [
       {
-        name: name
+        name: containerGroupName
         properties: {
           image: image
           ports: [
@@ -222,7 +222,7 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
     restartPolicy: restartPolicy
     ipAddress: {
       type: 'Public'
-      dnsNameLabel: dnsNameLabel
+      dnsNameLabel: dnsNameLabelUnique
       ports: [
         {
           port: port
