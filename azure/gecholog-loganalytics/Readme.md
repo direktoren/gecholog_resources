@@ -8,4 +8,4 @@ Click this button to deploy on Azure
 - A link Log Analytics Workspace
 - A `gecholog Dashboard DevOps` workbook
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdirektoren%2Fgecholog_resources%2Fmain%2Fazure%2gecholog-loganalytics%2Fgechologbundle.json)
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdirektoren%2Fgecholog_resources%2Fmain%2Fazure%2Fgecholog-loganalytics%2Fgechologbundle.json)
