@@ -8,6 +8,7 @@ COPY your_gl_config.json /app/conf/gl_config.json
 COPY your_tokencounter_config.json /app/conf/tokencounter_config.json
 COPY your_nats2log_config.json /app/conf/nats2log_config.json
 COPY your_nats2file_config.json /app/conf/nats2file_config.json
+COPY your_nats-server.conf /app/conf/nats-server.conf
 
 # Copy license & certificates (remove the lines that don't apply)
 COPY your_license.json /app/conf/license.json
