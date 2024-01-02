@@ -10,11 +10,15 @@ config = {
     "nats_topic": "coburn.gl.tokenizer",
     "model": "gpt2",
     "patterns" : {
-         "/gpt4/": {
+         "/service/standard/": {
             "request": ['ingress_payload', 'messages', 1, 'content'],
             "response": ['inbound_payload', 'choices', 0, 'message', 'content']
         },
-        "/gpt35turbo/": {
+        "/service/capped/": {
+            "request": ['ingress_payload', 'messages', 1, 'content'],
+            "response": ['inbound_payload', 'choices', 0, 'message', 'content']
+        },
+        "/restricted/": {
             "request": ['ingress_payload', 'messages', 1, 'content'],
             "response": ['inbound_payload', 'choices', 0, 'message', 'content']
         },
