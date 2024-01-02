@@ -33,8 +33,13 @@ Coming soon...
 
 ### Docker
 
-| Resource | Description | Type |
-|----------|----------|----------|
-| build custom image | Create your docker image | Dockerfile |
-| gecholog-ek-dev | Gecholog.ai + Elastic/Kibana bundle | docker-compose.yml |
+#### Resources
+
+- **gecholog-ek-dev**
+    - gecholog.ai container + Elastic/Kibana bundle
+    - docker-compose.yml
+- **custom docker image**
+    - create your docker image
+    - Dockerfile
+
 
