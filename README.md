@@ -15,12 +15,16 @@ Visit [gecholog.ai](https://www.gecholog.ai) and [docs.gecholog.ai](https://docs
 
 ### Azure
 
+[![Deploy LLM Gateway gecholog.ai to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdirektoren%2Fgecholog_resources%2Fmain%2Fazure%2Fnew-gecholog-resource-group%2Fnew-gecholog-resource-group.json)
+
+-------------------------------------------------
+
 | Resource | Description | Content |
 |----------|----------|----------|
 | new-gecholog-resource-group | builds a new resource group with gecholog, storage & dashboard | .bicep, .json (arm) |
 | gecholog-container-only | deploys latest gecholog container in existing resource group | .bicep |
 
-[![Deploy LLM Gateway gecholog.ai to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdirektoren%2Fgecholog_resources%2Fmain%2Fazure%2Fnew-gecholog-resource-group%2Fnew-gecholog-resource-group.json)
+
 
 ### AWS
 
