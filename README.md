@@ -2,9 +2,7 @@
 
 Visit [gecholog.ai](https://www.gecholog.ai) and [docs.gecholog.ai](https://docs.gecholog.ai) for more information on `gecholog`.
 
-## Content
-
-### Processors
+## Processors
  
 | Processor | Description | Language |
 |----------|----------|----------|
@@ -13,11 +11,11 @@ Visit [gecholog.ai](https://www.gecholog.ai) and [docs.gecholog.ai](https://docs
 | spacyentities | entity tagger using [spaCy](https://spacy.io) library | python |
 | tokenizer.py | tokenizer using [GPT2Tokenizer](https://huggingface.co/docs/transformers/model_doc/gpt2#transformers.GPT2Tokenizer) | python |
 
-### Azure
+## Azure
 
 [![Deploy LLM Gateway gecholog.ai to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdirektoren%2Fgecholog_resources%2Fmain%2Fazure%2Fnew-gecholog-resource-group%2Fnew-gecholog-resource-group.json)
 
-#### Resources
+### Resources
 
 - **new-gecholog-resource-group**
     - builds a new resource group with gecholog, storage & dashboard
@@ -27,13 +25,13 @@ Visit [gecholog.ai](https://www.gecholog.ai) and [docs.gecholog.ai](https://docs
     - .bicep
 
 
-### AWS
+## AWS
 
 Coming soon...
 
-### Docker
+## Docker
 
-#### Resources
+### Resources
 
 - **gecholog-ek-dev**
     - gecholog.ai container + Elastic/Kibana bundle
