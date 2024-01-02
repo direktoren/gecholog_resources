@@ -18,7 +18,7 @@ import (
 const (
 	natsServer        = "nats://localhost:4222"
 	natsSubject       = "coburn.gl.charactercount"
-	thisProcessorName = "character_count"
+	thisProcessorName = "charactercount"
 )
 
 var myLog *log.Logger
@@ -34,7 +34,7 @@ func do(ctx context.Context) {
 	}
 	defer nc.Close()
 
-	// Subscribe to the nats subject. This is where we get requests to proces
+	// Subscribe to the nats subject. This is where we get requests to process
 	sub, err := nc.QueueSubscribe(
 		natsSubject,
 		"anything",
