@@ -101,7 +101,7 @@ async def message_handler(msg):
         processed = await process(json_data)
         # Update response_data only if processing is successful
         response_data = {
-            "contentfilter": processed["results"],
+            "content_filter": processed["results"],
             "is_toxic": processed["is_toxic"]
         }
         if processed["is_toxic"]:
