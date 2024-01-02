@@ -85,10 +85,6 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
               port: port
               protocol: 'TCP'
             }
-            {
-              port: 4222
-              protocol: 'TCP'
-            }
           ]
           resources: {
             requests: {
@@ -151,10 +147,6 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
       ports: [
         {
           port: port
-          protocol: 'TCP'
-        }
-        {
-          port: 4222
           protocol: 'TCP'
         }
       ]
