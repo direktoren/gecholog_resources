@@ -1,5 +1,5 @@
 docker/custom/*.json
-azure/gecholog-loganalytics/tmp/*.*
+azure/new-gecholog-resource-group/tmp/*.*
 
 *.pem
 *.cert
