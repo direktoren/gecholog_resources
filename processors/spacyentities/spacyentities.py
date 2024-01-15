@@ -1,15 +1,27 @@
+import os
 import spacy
 import json
 from nats.aio.client import Client as NATS
 import asyncio
 
-# pip3 install nats-py spacy
-# python3 -m spacy download en_core_web_sm
+# python -m pip install spacy
+# python -m spacy download en_core_web_sm
+
+# CONFIG
+config = {
+    "verbose": False,
+    "nats_topic": "coburn.gl.spacyentities",
+    "model": "en_core_web_sm",
+}
 
 # Load English tokenizer, POS tagger, parser, NER, and word vectors
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load(config["model"])
 
 # HELPERS
+def verbose_print(debug, message, **kwargs):
+    if not debug or (debug and config["verbose"]):
+        print(message, **kwargs)
+
 def extract_outbound_payload(json_data):
     try:
         return json_data['outbound_payload']['messages'][1]['content']
@@ -37,7 +49,8 @@ async def process(json_data):
     if not text_to_process:
         raise ValueError("could not find text in expected fields. Nothing to process")
 
-    print(f"Text to process: '{text_to_process}'", flush=True)
+    verbose_print(True, f"Text to process: '{text_to_process}'", flush=True)
+
 
     # Return processed text with spaCy
     return nlp(text_to_process)
@@ -50,12 +63,12 @@ async def message_handler(msg):
     data = msg.data.decode()
     json_data = json.loads(data)
 
-    print(f"Received message with data: '{data}' on subject '{subject}'")
+    verbose_print(True, f"Received a message on '{subject}': {data}", flush=True)
 
     try:
         processed = await process(json_data)
     except ValueError as e:
-        print(e, flush=True)
+        verbose_print(False,e, flush=True)
     
     # Prepare response data
     response_data = {
@@ -70,16 +83,18 @@ async def message_handler(msg):
 # MESSAGE LOOP
 async def run_nats():
     nc = NATS()
+    glhost = os.getenv("GECHOLOG_HOST")
+    if not glhost:
+        glhost = "localhost"
+
+    nToken = os.getenv("NATS_TOKEN")
 
     # Connect to NATS server
-
-    # await nc.connect("nats://host.docker.internal:4222") # If nats is on the host machine network
-    # await nc.connect("nats://localhost:4222")            # If nats is on the same container / same host
-    await nc.connect("nats://gecholog:4222")               # If nats is on the same docker-compose network
-    print("Connected to NATS server!", flush=True)
+    await nc.connect("nats://" + glhost + ":4222", token=nToken) 
+    verbose_print(False, "Connected to NATS server!", flush=True)
 
     # Subscribe to subject "coburn.gl.spacyentities"
-    await nc.subscribe("coburn.gl.spacyentities", cb=message_handler)
+    await nc.subscribe(config["nats_topic"], cb=message_handler)
 
     # Keep the connection alive until a KeyboardInterrupt or another exception
     try:
@@ -89,14 +104,14 @@ async def run_nats():
         pass
     finally:
         await nc.close()  # Close NATS connection when exiting the function
-        print("NATS connection closed!", flush=True)
+        verbose_print(False,"NATS connection closed!", flush=True)
 
 # MAIN
 def main():
     try:
         asyncio.run(run_nats())  # This will run your asynchronous function and handle the event loop for you
     except KeyboardInterrupt:
-        print("Shutting down...", flush=True)
+        verbose_print(False,"Shutting down...", flush=True)
 
 if __name__ == '__main__':
     main()

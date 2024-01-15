@@ -1,14 +1,13 @@
 # Build for local use
 # ------------------------
-# docker build -f docker/container-images/gl-nlp-spacy-entities/Dockerfile -t gl-nlp-spacy-entities .
+# docker build -f Dockerfile -t spacyentities .
 
-# Example Dockerfile for Python service
 FROM python:3.8-slim
 
 WORKDIR /app
 
-COPY /processorexamples/spacyentities/ /app/
-COPY /processorexamples/spacyentities/requirements.txt ./
+COPY . /app/
+COPY ./requirements.txt ./
 
 # Install ps for health check
 RUN apt-get update && apt-get install -y procps

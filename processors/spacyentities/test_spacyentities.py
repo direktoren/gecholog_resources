@@ -1,6 +1,4 @@
 import pytest
-from spacy.lang.en import English
-from spacy.tokens import Doc
 import spacy
 from spacyentities import process
 
