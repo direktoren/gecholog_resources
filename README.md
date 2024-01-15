@@ -4,12 +4,23 @@ Visit [gecholog.ai](https://www.gecholog.ai) and [docs.gecholog.ai](https://docs
 
 ## Processors
  
-| Processor | Description | Language |
-|----------|----------|----------|
-| charactercount | simple go template processor | golang |
-| contentfilter | custom content filter using [detoxify](https://github.com/unitaryai/detoxify) library | python |
-| spacyentities | entity tagger using [spaCy](https://spacy.io) library | python |
-| tokenizer.py | tokenizer using [GPT2Tokenizer](https://huggingface.co/docs/transformers/model_doc/gpt2#transformers.GPT2Tokenizer) | python |
+### Resources
+
+- **charactercount**
+    - simple go template processor
+    - golang
+- **contentfilter**
+    - custom content filter using [detoxify](https://github.com/unitaryai/detoxify) library
+    - python
+- **regex**
+    - versatile regex & json slurper synchronous processor
+    - golang
+- **spacyentities**
+    - entity tagger using [spaCy](https://spacy.io) library
+    - python
+- **tokenizer**
+    - tokenizer using [GPT2Tokenizer](https://huggingface.co/docs/transformers/model_doc/gpt2#transformers.GPT2Tokenizer)
+    - python
 
 ## Azure
 
