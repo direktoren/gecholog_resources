@@ -11,6 +11,10 @@ param gechologApiKey string
 @secure()
 param aiServiceApiKey string 
 
+@description('OPTIONAL: nats token')
+@secure()
+param natsToken string
+
 @description('Storage Account Name')
 param storageAccountName string
 
@@ -85,6 +89,10 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
               port: port
               protocol: 'TCP'
             }
+            {
+              port: 4222
+              protocol: 'TCP'
+            }
           ]
           resources: {
             requests: {
@@ -125,6 +133,10 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
               name: 'AISERVICE_API_KEY'
               secureValue: aiServiceApiKey
             }
+            {
+              name: 'NATS_TOKEN'
+              secureValue: natsToken
+            }
           ]
           volumeMounts: [
             {
@@ -147,6 +159,10 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
       ports: [
         {
           port: port
+          protocol: 'TCP'
+        }
+        {
+          port: 4222
           protocol: 'TCP'
         }
       ]
