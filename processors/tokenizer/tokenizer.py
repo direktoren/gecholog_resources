@@ -1,3 +1,4 @@
+import os
 import json
 from nats.aio.client import Client as NATS
 from transformers import GPT2Tokenizer
@@ -6,7 +7,6 @@ import asyncio
 # CONFIG
 config = {
     "verbose": True,
-    "nats_url": "localhost:4222",
     "nats_topic": "coburn.gl.tokenizer",
     "model": "gpt2",
     "patterns" : {
@@ -114,7 +114,7 @@ async def message_handler(msg):
             }
         }
     except ValueError as e:
-        print(e, flush=True)
+        verbose_print(False,e, flush=True)
         # response_data remains an empty array in case of failure
 
     # Publish processed data back to another subject (e.g., "response.subject")
@@ -123,9 +123,14 @@ async def message_handler(msg):
 # MESSAGE LOOP
 async def run_nats():
     nc = NATS()
+    glhost = os.getenv("GECHOLOG_HOST")
+    if not glhost:
+        glhost = "localhost"
+
+    nToken = os.getenv("NATS_TOKEN")
 
     # Connect to NATS server
-    await nc.connect(config["nats_url"])              
+    await nc.connect("nats://" + glhost + ":4222", token=nToken) 
     verbose_print(False, "Connected to NATS server!", flush=True)
 
     # Subscribe to subject nats_topic

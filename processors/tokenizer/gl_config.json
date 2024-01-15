@@ -16,7 +16,8 @@
         "url": "nats://localhost:4222",
         "topic": "coburn.gl.gecholog",
         "topic_exact_isalive": "coburn.gl.isalive",
-        "topic_exact_logger": "coburn.gl.logger"
+        "topic_exact_logger": "coburn.gl.logger",
+        "token": "${NATS_TOKEN}"
     },
     "gl_port": 5380,
     "session_id_header": "Session-Id",
@@ -110,6 +111,22 @@
     "request": {
         "processors": [
             [
+                {
+                    "name": "tokenizer",
+                    "modifier": false,
+                    "required": false,
+                    "async": true,
+                    "input_fields_include": [
+                        "ingress_payload",
+                        "gl_path"
+                    ],
+                    "input_fields_exclude": [],
+                    "output_fields_write": [
+                        "tokenizer"
+                    ],
+                    "service_bus_topic": "coburn.gl.tokenizer",
+                    "timeout": 500
+                }
             ]
         ]
     },
