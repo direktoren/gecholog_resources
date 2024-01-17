@@ -38,7 +38,7 @@ docker run -d \
         regex
 
 # Monitor the logger queue & extract the data
-nats sub --translate "jq .response.egress_payload.regex" -s "$NATS_TOKEN@$localhost:4222" "coburn.gl.logger"
+nats sub --translate "jq .response.egress_payload.regex" -s "$NATS_TOKEN@localhost:4222" "coburn.gl.logger"
 
 ```
 
