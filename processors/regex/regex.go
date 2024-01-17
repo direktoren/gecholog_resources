@@ -49,12 +49,12 @@ var config configuration = configuration{
 		"default": field{
 			// https://github.com/tidwall/gjson/blob/master/SYNTAX.md
 			gjsonField: "egress_payload.choices.0.message.content",
-			regex:      "```(?:md|markdown)\n(.*?)\n```",
+			regex:      "```(?:md|markdown)\\n([\\s\\S]*?)\\n```",
 		},
 		"/markdown/": field{
 			// https://github.com/tidwall/gjson/blob/master/SYNTAX.md
 			gjsonField: "egress_payload.choices.0.message.content",
-			regex:      "```(?:md|markdown)\n(.*?)\n```",
+			regex:      "```(?:md|markdown)\\n([\\s\\S]*?)\\n```",
 		},
 		"/json/": field{
 			// https://github.com/tidwall/gjson/blob/master/SYNTAX.md
