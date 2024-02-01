@@ -38,7 +38,7 @@ docker run -d \
         spacyentities
 
 # Monitor the logger queue & extract the data
-nats sub --translate "jq .response.spacy_entities" -s "$NATS_TOKEN@localhost:4222" "coburn.gl.logger"
+nats sub --translate "jq .response.spacy_entities" -s "$NATS_TOKEN@$localhost:4222" "coburn.gl.logger"
 
 ```
 
