@@ -38,7 +38,7 @@ docker run -d \
         charactercount
 
 # Monitor the logger queue & extract the data
-nats sub --translate "jq .request.character_count" -s "$NATS_TOKEN@localhost:4222" "coburn.gl.logger"
+nats sub --translate "jq .request.character_count" -s "$NATS_TOKEN@$localhost:4222" "coburn.gl.logger"
 
 ```
 
