@@ -38,7 +38,7 @@ docker run -d \
         tokenizer
 
 # Monitor the logger queue & extract the tokenizer data
-nats sub --translate "jq .response.tokenizer" -s "$NATS_TOKEN@localhost:4222" "coburn.gl.logger"
+nats sub --translate "jq .response.tokenizer" -s "$NATS_TOKEN@$localhost:4222" "coburn.gl.logger"
 
 ```
 
