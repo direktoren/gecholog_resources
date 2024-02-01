@@ -131,7 +131,11 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 
 			_, exists := config.patterns[string(glPath)]
 			if !exists {
-				// Use default if not defined
+				// Use default if it exists
+				if _, exists := config.patterns["default"]; !exists {
+					vLog(true, "Noop: %v\n", "gl_path not found")
+					return
+				}
 				glPath = "default"
 			}
 
