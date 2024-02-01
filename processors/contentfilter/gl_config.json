@@ -1,4 +1,6 @@
 {
+    "version": "0.92.1",
+    "log_level": "INFO",
     "license_file": "./app/conf/license.json",
     "tls": {
         "ingress": {
@@ -13,7 +15,7 @@
         }
     },
     "service_bus": {
-        "url": "nats://localhost:4222",
+        "hostname": "localhost:4222",
         "topic": "coburn.gl.gecholog",
         "topic_exact_isalive": "coburn.gl.isalive",
         "topic_exact_logger": "coburn.gl.logger",
@@ -30,9 +32,8 @@
     ],
     "routers": [
         {
+            "path": "/echo/",
             "ingress": {
-                "path": "/echo/",
-                "url": "https://localhost",
                 "headers": {}
             },
             "outbound": {
@@ -45,9 +46,8 @@
             }
         },
         {
+            "path": "/service/standard/",
             "ingress": {
-                "path": "/service/standard/",
-                "url": "https://localhost",
                 "headers": {
                     "Content-Type": [
                         "application/json"
@@ -64,9 +64,8 @@
             }
         },
         {
+            "path": "/service/capped/",
             "ingress": {
-                "path": "/service/capped/",
-                "url": "https://localhost",
                 "headers": {
                     "Content-Type": [
                         "application/json"
@@ -83,9 +82,8 @@
             }
         },
         {
+            "path": "/restricted/",
             "ingress": {
-                "path": "/restricted/",
-                "url": "https://localhost",
                 "headers": {
                     "Content-Type": [
                         "application/json"
@@ -148,6 +146,5 @@
             "fields_include": [],
             "fields_exclude": []
         }
-    },
-    "debug": false
+    }
 }

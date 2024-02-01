@@ -38,7 +38,7 @@ docker run -d \
         contentfilter
 
 # Monitor the logger queue & extract the contentfilter data
-nats sub --translate "jq .response.egress_payload" -s "$NATS_TOKEN@localhost:4222" "coburn.gl.logger"
+nats sub --translate "jq .response.egress_payload" -s "$NATS_TOKEN@$localhost:4222" "coburn.gl.logger"
 
 ```
 
