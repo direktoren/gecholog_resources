@@ -44,7 +44,7 @@ type field struct {
 var config configuration = configuration{
 	verbose:     true,
 	natsSubject: "coburn.gl.regex",
-	matchJSON:   false,
+	matchJSON:   true,
 	patterns: map[string]field{
 		"default": field{
 			// https://github.com/tidwall/gjson/blob/master/SYNTAX.md
@@ -93,13 +93,22 @@ func vLog(verbose bool, msg string, items ...any) {
 
 // Connect to nats, do basic checks and call the process function
 func do(ctx context.Context, cancel context.CancelFunc) {
+
 	// Connect to NATS
-	nc, err := func() (*nats.Conn, error) {
-		if config.natsToken != "" {
-			return nats.Connect(config.natsServer, nats.Token(config.natsToken))
-		}
-		return nats.Connect(config.natsServer)
-	}()
+	opts := nats.GetDefaultOptions()
+	opts.Url = config.natsServer
+	opts.ReconnectWait = 3 * time.Second
+	opts.MaxReconnect = -1 // Keep trying to reconnect
+	if config.natsToken != "" {
+		opts.Token = config.natsToken
+	}
+	opts.ReconnectedCB = func(nc *nats.Conn) {
+		vLog(false, "Reconnected to NATS server!")
+	}
+	opts.DisconnectedErrCB = func(nc *nats.Conn, err error) {
+		vLog(false, "Disconnected from NATS server: %v", err)
+	}
+	nc, err := opts.Connect()
 
 	if err != nil {
 		vLog(false, "Error connecting to NATS: %v", err)

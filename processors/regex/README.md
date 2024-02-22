@@ -20,20 +20,20 @@ docker run -d -p 5380:5380 -p 4222:4222 \
   --env AISERVICE_API_BASE=$AISERVICE_API_BASE \
   gecholog/gecholog:latest
 
-# Get the container id
-docker ps
+# Copy the gl_config to gecholog (if valid it will be applied directly)
+docker cp gl_config.json gecholog:/app/conf/gl_config.json
 
-# Copy the gl_config file & restart gecholog
-docker cp "gl_config.json" your_container_id:/app/conf/gl_config.json
-docker restart your_container_id
+# OPTIONAL: Check that the config file is applied (both statements should produce the same checksum)
+shasum -a 256 gl_config.json| cut -d ' ' -f 1
+docker exec gecholog ./healthcheck -s gl -p
 
 # Build the processor container
-docker build --no-cache -f "Dockerfile" -t regex .
+docker build --no-cache -f Dockerfile -t regex .
 
 # Start the processor container
 docker run -d \
         --network gecholog --name regex \
-        --env NATS_TOKEN="$NATS_TOKEN" \
+        --env NATS_TOKEN=$NATS_TOKEN \
         --env GECHOLOG_HOST=gecholog \
         regex
 
@@ -137,26 +137,26 @@ docker run -d -p 5380:5380 -p 4222:4222 \
   --env AISERVICE_API_BASE=$AISERVICE_API_BASE \
   gecholog/gecholog:latest
 
-# Get the container id
-docker ps
+# Copy the gl_config to gecholog (if valid it will be applied directly)
+docker cp gl_config.json gecholog:/app/conf/gl_config.json
 
-# Copy the gl_config file & restart gecholog
-docker cp "gl_config.json" your_container_id:/app/conf/gl_config.json
-docker restart your_container_id
+# OPTIONAL: Check that the config file is applied (both statements should produce the same checksum)
+shasum -a 256 gl_config.json| cut -d ' ' -f 1
+docker exec gecholog ./healthcheck -s gl -p
 
 # Build the processor container
-docker build --no-cache -f "Dockerfile" -t regex .
+docker build --no-cache -f Dockerfile -t regex .
 
 # Start the processor container
 docker run -d \
         --network gecholog --name regex \
-        --env NATS_TOKEN="$NATS_TOKEN" \
+        --env NATS_TOKEN=$NATS_TOKEN \
         --env GECHOLOG_HOST=gecholog \
         --env MATCH_JSON=true \
         regex
 
 # Monitor the logger queue & extract the data
-nats sub --translate "jq .response.egress_payload.regex" -s "$NATS_TOKEN@$localhost:4222" "coburn.gl.logger"
+nats sub --translate "jq .response.egress_payload.regex" -s "$NATS_TOKEN@localhost:4222" "coburn.gl.logger"
 
 ```
 
