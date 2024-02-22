@@ -6,6 +6,9 @@ Visit [gecholog.ai](https://www.gecholog.ai) and [docs.gecholog.ai](https://docs
  
 ### Resources
 
+- **broker**
+    - load balancer and failover processor
+    - golang
 - **charactercount**
     - simple go template processor
     - golang
