@@ -1,0 +1,188 @@
+{
+    "version": "0.92.1",
+    "log_level": "INFO",
+    "license_file": "./app/conf/license.json",
+    "tls": {
+        "ingress": {
+            "enabled": false,
+            "certificate_file": "./app/conf/cert.pem",
+            "private_key_file": "./app/conf/key.pem"
+        },
+        "outbound": {
+            "insecure": false,
+            "system_cert_pool": true,
+            "cert_files": []
+        }
+    },
+    "service_bus": {
+        "hostname": "localhost:4222",
+        "topic": "coburn.gl.gecholog",
+        "topic_exact_isalive": "coburn.gl.isalive",
+        "topic_exact_logger": "coburn.gl.logger",
+        "token": "${NATS_TOKEN}"
+    },
+    "gl_port": 5380,
+    "session_id_header": "Session-Id",
+    "masked_headers": [
+        "Authorization",
+        "Api-Key"
+    ],
+    "remove_headers": [
+        "Content-Length"
+    ],
+    "routers": [
+        {
+            "path": "/echo/",
+            "ingress": {
+                "headers": {}
+            },
+            "outbound": {
+                "url": "https://localhost",
+                "headers": {
+                    "Content-Type": [
+                        "application/json"
+                    ]
+                }
+            }
+        },
+        {
+            "path": "/azure/",
+            "ingress": {
+                "headers": {
+                    "Content-Type": [
+                        "application/json"
+                    ]
+                }
+            },
+            "outbound": {
+                "url": "${AISERVICE_API_BASE}",
+                "endpoint": "openai/deployments/gpt4/chat/completions?api-version=2023-05-15",
+                "headers": {
+                    "Content-Type": [
+                        "application/json"
+                    ]
+                }
+            }
+        },
+        {
+            "path": "/azure/gpt4/",
+            "ingress": {
+                "headers": {
+                    "Content-Type": [
+                        "application/json"
+                    ],
+                    "Api-Key": [
+                        "BLOCKED"
+                    ]
+                }
+            },
+            "outbound": {
+                "url": "${AISERVICE_API_BASE}",
+                "endpoint": "openai/deployments/gpt4/chat/completions?api-version=2023-05-15",
+                "headers": {
+                    "Content-Type": [
+                        "application/json"
+                    ]
+                }
+            }
+        },
+        {
+            "path": "/azure/dud/",
+            "ingress": {
+                "headers": {
+                    "Content-Type": [
+                        "application/json"
+                    ],
+                    "Api-Key": [
+                        "BLOCKED"
+                    ]
+                }
+            },
+            "outbound": {
+                "url": "https://dud.host.ere",
+                "endpoint": "",
+                "headers": {
+                    "Content-Type": [
+                        "application/json"
+                    ],
+                    "Api-Key": [
+                        "BLOCKED"
+                    ]
+                }
+            }
+        },
+        {
+            "path": "/azure/gpt35turbo/",
+            "ingress": {
+                "headers": {
+                    "Content-Type": [
+                        "application/json"
+                    ],
+                    "Api-Key": [
+                        "BLOCKED"
+                    ]
+                }
+            },
+            "outbound": {
+                "url": "${AISERVICE_API_BASE}",
+                "endpoint": "openai/deployments/gpt35turbo/chat/completions?api-version=2023-05-15",
+                "headers": {
+                    "Content-Type": [
+                        "application/json"
+                    ]
+                }
+            }
+        }
+    ],
+    "request": {
+        "processors": [
+            [
+                {
+                    "name": "broker",
+                    "modifier": true,
+                    "required": false,
+                    "async": false,
+                    "input_fields_include": [
+                        "gl_path"
+                    ],
+                    "input_fields_exclude": [],
+                    "output_fields_write": [
+                        "gl_path"
+                    ],
+                    "service_bus_topic": "coburn.gl.broker",
+                    "timeout": 50
+                }
+            ]
+        ]
+    },
+    "response": {
+        "processors": [
+            [
+                {
+                    "name": "broker",
+                    "modifier": false,
+                    "required": false,
+                    "async": true,
+                    "input_fields_include": [
+                        "gl_path", "egress_status_code"
+                    ],
+                    "input_fields_exclude": [],
+                    "output_fields_write": [
+                    ],
+                    "service_bus_topic": "coburn.gl.broker",
+                    "timeout": 50
+                }
+            ]
+        ]
+    },
+    "logger": {
+        "request": {
+            "fields_include": [],
+            "fields_exclude": []
+        },
+        "response": {
+            "fields_include": [],
+            "fields_exclude": []
+        }
+    }
+}
