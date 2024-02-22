@@ -68,7 +68,6 @@ services:
       - NATS_TOKEN=${PASSWORD}
       - NATS2LOG_LOGGER_SUBTOPIC=.logger
     healthcheck:
-      test: ps | grep '/gl -o /app/conf/gl_config.json' | grep -v grep -q
       interval: 1s
       timeout: 1s
       retries: 120

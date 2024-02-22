@@ -4,6 +4,7 @@
 FROM gecholog/gecholog:latest
 
 # Copy the config files (remove the lines that don't apply)
+# COPY your_ginit_config.json /app/conf/ginit_config.json
 COPY your_gl_config.json /app/conf/gl_config.json
 COPY your_tokencounter_config.json /app/conf/tokencounter_config.json
 COPY your_nats2log_config.json /app/conf/nats2log_config.json
@@ -20,4 +21,4 @@ COPY ca.cert /app/conf/ca.cert
 EXPOSE 5380 4222 8222 6222
 
 # Run the start script.
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["./ginit", "-o", "/app/conf/ginit_config.json"]
