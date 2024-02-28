@@ -180,6 +180,8 @@ export AISERVICE_API_BASE=https://your.openai.azure.com/
 ```
 
 ```sh
+cd gecholog_resources/processors/mock
+
 # Create a docker network
 docker network create gecholog
 
@@ -229,7 +231,6 @@ You can connect to the service bus of `gecholog` container to see the logs from 
 This command will display the `control` field that `mock` uses to prevent the request from being forwarded to the LLM API
 
 ```sh
-# Monitor the logger queue & extract the data
 nats sub --translate "jq .request.control" -s "$NATS_TOKEN@localhost:4222" "coburn.gl.logger"
 ```
 
