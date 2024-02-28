@@ -15,6 +15,9 @@ Visit [gecholog.ai](https://www.gecholog.ai) and [docs.gecholog.ai](https://docs
 - **contentfilter**
     - custom content filter using [detoxify](https://github.com/unitaryai/detoxify) library
     - python
+- **mock**
+    - Mock the LLM API by replicating your last api call
+    - golang
 - **regex**
     - versatile regex & json slurper synchronous processor
     - golang
