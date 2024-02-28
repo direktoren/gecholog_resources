@@ -17,9 +17,12 @@ More information about `gecholog` can be found at [docs.gecholog.ai](https://doc
 git clone https://github.com/direktoren/gecholog_resources.git
 ```
 
-### 2. Set Url of LLM API
+### 2. Set environment variables
 
 ```sh
+# Set the nats token
+export NATS_TOKEN=changeme
+
 # Replace this with the url to your LLM API
 export AISERVICE_API_BASE=https://your.openai.azure.com/
 ```
