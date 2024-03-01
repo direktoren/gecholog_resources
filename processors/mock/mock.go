@@ -23,8 +23,6 @@ type router struct {
 }
 
 type configuration struct {
-	verbose bool
-
 	natsServer  string
 	natsToken   string
 	natsSubject string
@@ -37,7 +35,6 @@ type configuration struct {
 }
 
 var config configuration = configuration{
-	verbose:         true,
 	natsSubject:     "coburn.gl.mock",
 	mockRouter:      "/mock/",
 	recordedRouters: make(map[string]router, 10), // Best practice to allocate memory for the map
