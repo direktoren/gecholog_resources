@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  gecholog:
+    build:
+      context: .
+      dockerfile: gecholog.Dockerfile
+    container_name: gecholog
+    ports:
+      - 5380:5380
+      - 4222:4222
+    environment:
+      - NATS_TOKEN=${NATS_TOKEN}
+      - AISERVICE_API_BASE=${AISERVICE_API_BASE}
+    networks:
+      - gecholog-network
+    healthcheck:
+      interval: 1s
+      retries: 10
+
+  regex:
+    depends_on:
+      gecholog:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: regex
+    environment:
+      - NATS_TOKEN=${NATS_TOKEN}
+      - GECHOLOG_HOST=gecholog
+      - MATCH_JSON=true
+    networks:
+      - gecholog-network
+
+networks:
+  gecholog-network:
+    driver: bridge

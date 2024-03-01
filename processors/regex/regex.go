@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"regexp"
-	"runtime"
-	"strconv"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -16,24 +14,13 @@ import (
 	"github.com/tidwall/sjson"
 )
 
-// INPUT FIELD: egress_payload (json)
-// OUTPUT FIELD: egress_payload.regex (json)
-
-const (
-	thisProcessorName = "regex"
-)
-
 type configuration struct {
-	verbose bool
-
 	matchJSON bool
 
 	natsServer  string
 	natsToken   string
 	natsSubject string
 	patterns    map[string]field
-
-	log *log.Logger
 }
 
 type field struct {
@@ -42,7 +29,6 @@ type field struct {
 }
 
 var config configuration = configuration{
-	verbose:     true,
 	natsSubject: "coburn.gl.regex",
 	matchJSON:   true,
 	patterns: map[string]field{
@@ -69,24 +55,10 @@ type section struct {
 	Text   string          `json:"text"`
 	Object json.RawMessage `json:"object"`
 }
+
 type regexpResponse struct {
 	Match    bool      `json:"match"`
 	Sections []section `json:"sections"`
-}
-
-// logger with verbose flag
-func vLog(verbose bool, msg string, items ...any) {
-	if verbose && !config.verbose {
-		return
-	}
-	// Get caller info
-	_, file, line, _ := runtime.Caller(1) // 1 means one level up in the call stack
-
-	// Format the message with the file and line
-	newMsg := file + ":" + strconv.Itoa(line) + ": " + msg
-
-	// Log the message
-	config.log.Printf(newMsg, items...)
 }
 
 // ------------------------------- DO --------------------------------
@@ -103,15 +75,15 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 		opts.Token = config.natsToken
 	}
 	opts.ReconnectedCB = func(nc *nats.Conn) {
-		vLog(false, "Reconnected to NATS server!")
+		slog.Info("Reconnected to NATS server!")
 	}
 	opts.DisconnectedErrCB = func(nc *nats.Conn, err error) {
-		vLog(false, "Disconnected from NATS server: %v", err)
+		slog.Warn("Disconnected from NATS server", slog.Any("error", err))
 	}
 	nc, err := opts.Connect()
 
 	if err != nil {
-		vLog(false, "Error connecting to NATS: %v", err)
+		slog.Error("Error connecting to NATS", slog.Any("error", err))
 		cancel()
 		return
 	}
@@ -123,18 +95,18 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 		"anything",
 		func(msg *nats.Msg) {
 
-			vLog(true, "Received msg.Data: %s\n", string(msg.Data))
+			slog.Debug("received", slog.String("data", string(msg.Data)))
 			responseBytes := []byte{} // default response
 			defer func() {
 				msg.Respond(responseBytes)
-				vLog(true, "Sending back: msg.Respond: %s\n", string(responseBytes)) // For verbosity
+				slog.Debug("sending back", slog.String("response", string(responseBytes)))
 			}()
 
 			// Figure out what router (gl_path) we are using
 			glPathExtract := gjson.Get(string(msg.Data), "gl_path")
 			glPath := glPathExtract.String()
 			if glPath == "" {
-				vLog(false, "Error: %v\n", "gl_path not found")
+				slog.Error("gl_path not found")
 				return
 			}
 
@@ -142,7 +114,7 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 			if !exists {
 				// Use default if it exists
 				if _, exists := config.patterns["default"]; !exists {
-					vLog(true, "Noop: %v\n", "gl_path not found")
+					slog.Debug("noop: gl_path not found")
 					return
 				}
 				glPath = "default"
@@ -166,7 +138,7 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 					newSection.Object = json.RawMessage(text)
 				}
 				processorResponse.Sections = append(processorResponse.Sections, newSection)
-				vLog(true, "newSection: %v\n", newSection)
+				slog.Debug("newSection", slog.Any("newSection", newSection))
 			}
 
 			/*processorResponseBytes, err := json.Marshal(&processorResponse)
@@ -179,7 +151,7 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 			egressPayloadExtract := gjson.Get(string(msg.Data), "egress_payload")
 			newEgressPayload, err := sjson.Set(string(egressPayloadExtract.Raw), "regex", &processorResponse)
 			if err != nil {
-				vLog(false, "Error: %v\n", err)
+				slog.Error("problem setting regex field", slog.Any("error", err))
 				return
 			}
 
@@ -189,20 +161,20 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 			// Prepare response
 			responseBytes, err = json.Marshal(&gechologData)
 			if err != nil {
-				vLog(false, "Error: %v\n", err)
+				slog.Error("error marshalling response", slog.Any("error", err))
 				return
 			}
 		},
 	)
 	if err != nil {
-		vLog(false, "Error subscribing to subject: %v\n", err)
+		slog.Error("error subscribing to subject", slog.Any("error", err))
 		cancel()
 		return
 	}
 	defer sub.Unsubscribe()
 
 	// Wait for messages
-	vLog(false, "Connected to NATS server!")
+	slog.Info("Connected to NATS server!")
 	<-ctx.Done()
 }
 
@@ -211,8 +183,9 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 // Set up possible configs, logger, context & cancel, capture ctrl-C and call do()
 func main() {
 
-	// Custom logger
-	config.log = log.New(os.Stdout, thisProcessorName+": ", log.Ldate|log.Ltime)
+	// Set logger level
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+
 	glHost := os.Getenv("GECHOLOG_HOST")
 	if glHost == "" {
 		glHost = "localhost"
