@@ -11,7 +11,7 @@ The `mock` processor will randomize the response time to resemble an LLM API. Yo
 More information about `gecholog` can be found at [docs.gecholog.ai](https://docs.gecholog.ai/latest).
 
 ## Quick Start: Simulate LLM API Responses
-### 1. Clone this Git repo
+### 1. Clone this GitHub repo
 
 ```sh
 git clone https://github.com/direktoren/gecholog_resources.git
@@ -20,7 +20,7 @@ git clone https://github.com/direktoren/gecholog_resources.git
 ### 2. Set environment variables
 
 ```sh
-# Set the nats token
+# Set the nats token (necessary for mock to connect to gecholog)
 export NATS_TOKEN=changeme
 
 # Replace this with the url to your LLM API
@@ -172,7 +172,7 @@ request4 to /mock/service/capped/ returns answer2
 ### Start `gecholog` and `mock` manually
 
 ```sh
-# Set the nats token
+# Set the nats token (necessary for mock to connect to gecholog)
 export NATS_TOKEN=changeme
 
 # Replace this with the url to your LLM API
@@ -231,7 +231,7 @@ You can connect to the service bus of `gecholog` container to see the logs from 
 This command will display the `control` field that `mock` uses to prevent the request from being forwarded to the LLM API
 
 ```sh
-nats sub --translate "jq .request.control" -s "$NATS_TOKEN@localhost:4222" "coburn.gl.logger"
+nats sub --translate "jq .request.control" -s "$NATS_TOKEN@localhost" "coburn.gl.logger"
 ```
 
 Sending a first request to `/service/standard/` and three consecutive to `/mock/service/standard/` produces this output
