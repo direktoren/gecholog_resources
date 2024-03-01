@@ -3,11 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log"
-	"math/rand"
+	"log/slog"
+	"math/rand/v2"
 	"os"
 	"os/signal"
-	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -16,27 +15,13 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// INPUT FIELD: request.gl_path (string)
-// OUTPUT FIELD: request.gl_path (string)
-
-const (
-	thisProcessorName = "broker"
-)
-
 type router struct {
 	glPath    string
 	disabled  bool
 	errorTime time.Time
 }
 
-const (
-	// 10 minute
-	disableTime = 10
-)
-
 type configuration struct {
-	verbose bool
-
 	natsServer  string
 	natsToken   string
 	natsSubject string
@@ -44,12 +29,11 @@ type configuration struct {
 	ingressRouter   string
 	outboundRouters []router
 
-	log *log.Logger
-	m   *sync.Mutex
+	disabledTime float64
+	m            *sync.Mutex
 }
 
 var config configuration = configuration{
-	verbose:       true,
 	natsSubject:   "coburn.gl.broker",
 	ingressRouter: "/azure/",
 	outboundRouters: []router{
@@ -66,22 +50,8 @@ var config configuration = configuration{
 			disabled: false,
 		},
 	},
-	m: &sync.Mutex{},
-}
-
-// logger with verbose flag
-func vLog(verbose bool, msg string, items ...any) {
-	if verbose && !config.verbose {
-		return
-	}
-	// Get caller info
-	_, file, line, _ := runtime.Caller(1) // 1 means one level up in the call stack
-
-	// Format the message with the file and line
-	newMsg := file + ":" + strconv.Itoa(line) + ": " + msg
-
-	// Log the message
-	config.log.Printf(newMsg, items...)
+	disabledTime: 10, // 10 minutes default
+	m:            &sync.Mutex{},
 }
 
 // ------------------------------- DO --------------------------------
@@ -98,15 +68,15 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 		opts.Token = config.natsToken
 	}
 	opts.ReconnectedCB = func(nc *nats.Conn) {
-		vLog(false, "Reconnected to NATS server!")
+		slog.Info("Reconnected to NATS server!")
 	}
 	opts.DisconnectedErrCB = func(nc *nats.Conn, err error) {
-		vLog(false, "Disconnected from NATS server: %v", err)
+		slog.Warn("Disconnected from NATS server", slog.Any("error", err))
 	}
 	nc, err := opts.Connect()
 
 	if err != nil {
-		vLog(false, "Error connecting to NATS: %v", err)
+		slog.Error("Error connecting to NATS", slog.Any("error", err))
 		cancel()
 		return
 	}
@@ -118,18 +88,18 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 		"anything",
 		func(msg *nats.Msg) {
 
-			vLog(true, "Received msg.Data: %s\n", string(msg.Data))
+			slog.Debug("received", slog.String("data", string(msg.Data)))
 			responseBytes := []byte{} // default response
 			defer func() {
 				msg.Respond(responseBytes)
-				vLog(true, "Sending back: msg.Respond: %s\n", string(responseBytes)) // For verbosity
+				slog.Debug("sending back", slog.String("response", string(responseBytes)))
 			}()
 
 			// Figure out what router (gl_path) we are using
 			glPathExtract := gjson.Get(string(msg.Data), "gl_path")
 			glPath := glPathExtract.String()
 			if glPath == "" {
-				vLog(false, "Error: %v\n", "gl_path not found")
+				slog.Error("gl_path not found")
 				return
 			}
 
@@ -146,7 +116,7 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 							config.outboundRouters[i].disabled = true
 							config.outboundRouters[i].errorTime = time.Now()
 							config.m.Unlock()
-							vLog(true, "Disabling router '%s' for %d minutes.", glPath, disableTime)
+							slog.Warn("disabling router", slog.String("router", glPath), slog.Float64("minutes", config.disabledTime))
 						}
 					}
 				}
@@ -155,7 +125,7 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 
 			// It's Request context
 			if glPath != config.ingressRouter {
-				vLog(false, "Router: %v\n", "gl_path not routed")
+				slog.Debug("ignoring request", slog.String("router", glPath))
 				return
 			}
 
@@ -163,11 +133,11 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 			enabledRouters := []router{}
 			for _, r := range config.outboundRouters {
 				if r.disabled {
-					if time.Since(r.errorTime).Minutes() > disableTime {
+					if time.Since(r.errorTime).Minutes() > config.disabledTime {
 						config.m.Lock()
 						r.disabled = false
 						config.m.Unlock()
-						vLog(true, "Enabling router '%s'", r.glPath)
+						slog.Warn("enabling router", slog.String("router", r.glPath))
 					}
 				}
 				if !r.disabled {
@@ -176,12 +146,12 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 			}
 
 			if len(enabledRouters) == 0 {
-				vLog(false, "Error: No routers available\n")
+				slog.Error("no routers available")
 				return
 			}
 
 			// Pick a router at random
-			glPath = enabledRouters[rand.Intn(len(enabledRouters))].glPath
+			glPath = enabledRouters[rand.IntN(len(enabledRouters))].glPath
 
 			var gechologData = make(map[string]json.RawMessage)
 			bytes, _ := json.Marshal(glPath)
@@ -190,20 +160,20 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 			// Prepare response
 			responseBytes, err = json.Marshal(&gechologData)
 			if err != nil {
-				vLog(false, "Error: %v\n", err)
+				slog.Error("error marshalling response", slog.Any("error", err))
 				return
 			}
 		},
 	)
 	if err != nil {
-		vLog(false, "Error subscribing to subject: %v\n", err)
+		slog.Error("error subscribing to subject", slog.Any("error", err))
 		cancel()
 		return
 	}
 	defer sub.Unsubscribe()
 
 	// Wait for messages
-	vLog(false, "Connected to NATS server!")
+	slog.Info("Connected to NATS server!")
 	<-ctx.Done()
 }
 
@@ -212,14 +182,20 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 // Set up possible configs, logger, context & cancel, capture ctrl-C and call do()
 func main() {
 
-	// Custom logger
-	config.log = log.New(os.Stdout, thisProcessorName+": ", log.Ldate|log.Ltime)
+	// Set logger level
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+
 	glHost := os.Getenv("GECHOLOG_HOST")
 	if glHost == "" {
 		glHost = "localhost"
 	}
 	config.natsServer = "nats://" + glHost + ":4222"
 	config.natsToken = os.Getenv("NATS_TOKEN")
+
+	disabledTime := os.Getenv("DISABLED_TIME") // In minutes. Used to disable a router for a certain amount of time
+	if disabledTime != "" {
+		config.disabledTime, _ = strconv.ParseFloat(disabledTime, 64)
+	}
 
 	// Create context & sync
 	ctx, cancelFunction := context.WithCancel(context.Background())
