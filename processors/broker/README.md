@@ -25,7 +25,7 @@ If you want to use other deployments, update the `gl_config.json` router->outbou
     "endpoint": "openai/deployments/your_second_deployment/chat/completions?api-version=2023-05-15",
 ```
 
-## Quick Start: Simulate LLM API Responses
+## Quick Start: Load Balance LLM APIs
 ### 1. Clone this GitHub repo
 
 ```sh
@@ -42,7 +42,7 @@ export NATS_TOKEN=changeme
 export AISERVICE_API_BASE=https://your.openai.azure.com/
 ```
 
-### 3. Start `gecholog` and the `mock` processor
+### 3. Start `gecholog` and the `broker` processor
 
 ```sh
 cd gecholog_resources/processors/broker
