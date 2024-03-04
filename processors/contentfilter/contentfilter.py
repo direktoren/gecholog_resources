@@ -20,9 +20,18 @@ config = {
     }
 }
 
-
 # Load the model
-model = Detoxify(config["model"])
+model = None
+
+async def load_model():
+    global model
+    model = Detoxify(config["model"])
+
+async def main():
+    await asyncio.gather(load_model())
+
+# Run the main function
+asyncio.run(main())
 
 # HELPERS
 def verbose_print(debug, message, **kwargs):
@@ -122,6 +131,11 @@ async def run_nats():
         glhost = "localhost"
 
     nToken = os.getenv("NATS_TOKEN")
+
+    threshold = os.getenv("THRESHOLD")
+    if threshold:
+        config["threshold"] = float(threshold)
+        verbose_print(False, f"Threshold set to {config['threshold']}", flush=True)
 
     # Connect to NATS server
     await nc.connect("nats://" + glhost + ":4222", token=nToken) 
