@@ -11,6 +11,7 @@ The `mock` processor will randomize the response time to resemble an LLM API. Yo
 More information about `gecholog` can be found at [docs.gecholog.ai](https://docs.gecholog.ai/latest).
 
 ## Quick Start: Simulate LLM API Responses
+
 ### 1. Clone this GitHub repo
 
 ```sh
