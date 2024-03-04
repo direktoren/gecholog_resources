@@ -3,51 +3,23 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
-	"runtime"
 	"strconv"
 	"time"
 
 	"github.com/nats-io/nats.go"
 )
 
-// INPUT FIELD: ingress_payload (json)
-// OUTPUT FIELD: character_count (json)
-
-const (
-	thisProcessorName = "charactercount"
-)
-
 type configuration struct {
-	verbose bool
-
 	natsServer  string
 	natsToken   string
 	natsSubject string
-
-	log *log.Logger
 }
 
 var config configuration = configuration{
-	verbose:     true,
 	natsSubject: "coburn.gl.charactercount",
-}
-
-// logger with verbose flag
-func vLog(verbose bool, msg string, items ...any) {
-	if verbose && !config.verbose {
-		return
-	}
-	// Get caller info
-	_, file, line, _ := runtime.Caller(1) // 1 means one level up in the call stack
-
-	// Format the message with the file and line
-	newMsg := file + ":" + strconv.Itoa(line) + ": " + msg
-
-	// Log the message
-	config.log.Printf(newMsg, items...)
 }
 
 // ------------------------------- DO --------------------------------
@@ -64,15 +36,15 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 		opts.Token = config.natsToken
 	}
 	opts.ReconnectedCB = func(nc *nats.Conn) {
-		vLog(false, "Reconnected to NATS server!")
+		slog.Info("Reconnected to NATS server!")
 	}
 	opts.DisconnectedErrCB = func(nc *nats.Conn, err error) {
-		vLog(false, "Disconnected from NATS server: %v", err)
+		slog.Warn("Disconnected from NATS server", slog.Any("error", err))
 	}
 	nc, err := opts.Connect()
 
 	if err != nil {
-		vLog(false, "Error connecting to NATS: %v", err)
+		slog.Error("Error connecting to NATS", slog.Any("error", err))
 		cancel()
 		return
 	}
@@ -83,11 +55,12 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 		config.natsSubject,
 		"anything",
 		func(msg *nats.Msg) {
-			vLog(true, "Received msg.Data: %s\n", string(msg.Data))
-			response := []byte{}
+
+			slog.Debug("received", slog.String("data", string(msg.Data)))
+			responseBytes := []byte{}
 			defer func() {
-				msg.Respond(response)
-				vLog(true, "Sending back: msg.Respond: %s\n", string(response)) // For verbosity
+				msg.Respond(responseBytes)
+				slog.Debug("sending back", slog.String("response", string(responseBytes)))
 
 			}()
 
@@ -95,14 +68,14 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 			var inputData map[string]json.RawMessage
 			err := json.Unmarshal(msg.Data, &inputData)
 			if err != nil {
-				vLog(false, "Error: %v\n", err)
+				slog.Error("unmarshal error", slog.Any("error", err))
 				return
 			}
 
 			// Process the data
 			ingressPayload, ok := inputData["ingress_payload"]
 			if !ok {
-				vLog(false, "Error: %v\n", "ingress_payload not found")
+				slog.Error("ingress_payload not found")
 				return
 			}
 
@@ -110,9 +83,9 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 			outputData["character_count"] = []byte(strconv.Itoa(len(ingressPayload)))
 
 			// Prepare response
-			response, err = json.Marshal(&outputData)
+			responseBytes, err = json.Marshal(&outputData)
 			if err != nil {
-				vLog(false, "Error: %v\n", err)
+				slog.Error("error marshalling response", slog.Any("error", err))
 				return
 			}
 
@@ -120,14 +93,14 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 		},
 	)
 	if err != nil {
-		vLog(false, "Error subscribing to subject: %v\n", err)
+		slog.Error("error subscribing to subject", slog.Any("error", err))
 		cancel()
 		return
 	}
 	defer sub.Unsubscribe()
 
 	// Wait for messages
-	vLog(false, "Connected to NATS server!")
+	slog.Info("Connected to NATS server!")
 	<-ctx.Done()
 }
 
@@ -136,8 +109,9 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 // Set up possible configs, logger, context & cancel, capture ctrl-C and call do()
 func main() {
 
-	// Custom logger
-	config.log = log.New(os.Stdout, thisProcessorName+": ", log.Ldate|log.Ltime)
+	// Set logger level
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+
 	glHost := os.Getenv("GECHOLOG_HOST")
 	if glHost == "" {
 		glHost = "localhost"
