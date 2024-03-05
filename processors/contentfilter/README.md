@@ -66,13 +66,14 @@ docker exec gecholog ./healthcheck -s gl -p
 
 ```sh
 python contentfilter.py
-````
+```
 
 When ready, the output is
 
 ```sh
 Connected to NATS server!
 ```
+
 ### 6. Make the calls
 
 This example will use Azure OpenAI, but you can use any LLM API service.
