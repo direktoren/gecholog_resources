@@ -209,7 +209,7 @@ docker run -d \
         --network gecholog --name mock \
         --env NATS_TOKEN=$NATS_TOKEN \
         --env GECHOLOG_HOST=gecholog \
-        --env LANBDA=0.2 \
+        --env LAMBDA=0.2 \
         mock
 ```
 
