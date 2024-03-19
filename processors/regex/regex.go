@@ -141,12 +141,6 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 				slog.Debug("newSection", slog.Any("newSection", newSection))
 			}
 
-			/*processorResponseBytes, err := json.Marshal(&processorResponse)
-			if err != nil {
-				vLog(false, "Error: %v\n", err)
-				return
-			}*/
-
 			// Use sjson to update the egress_payload by adding the regex response
 			egressPayloadExtract := gjson.Get(string(msg.Data), "egress_payload")
 			newEgressPayload, err := sjson.Set(string(egressPayloadExtract.Raw), "regex", &processorResponse)
