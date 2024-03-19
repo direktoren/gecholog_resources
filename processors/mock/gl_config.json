@@ -177,12 +177,14 @@
                     "input_fields_include": [
                         "gl_path",
                         "egress_payload",
-                        "egress_headers"
+                        "egress_headers",
+                        "egress_status_code"
                     ],
                     "input_fields_exclude": [],
                     "output_fields_write": [
                         "egress_payload",
-                        "egress_headers"
+                        "egress_headers",
+                        "egress_status_code"
                     ],
                     "service_bus_topic": "coburn.gl.mock",
                     "timeout": 100000

@@ -17,9 +17,10 @@ import (
 )
 
 type router struct {
-	glPath          string
-	responsePayload json.RawMessage
-	responseHeaders json.RawMessage
+	glPath             string
+	responsePayload    json.RawMessage
+	responseHeaders    json.RawMessage
+	responseStatusCode json.RawMessage
 }
 
 type configuration struct {
@@ -164,9 +165,10 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 				}
 
 				// Prepare response
-				var gechologData = make(map[string]json.RawMessage, 1)
+				var gechologData = make(map[string]json.RawMessage, 3)
 				gechologData["egress_payload"] = recordedRouter.responsePayload
 				gechologData["egress_headers"] = recordedRouter.responseHeaders
+				gechologData["egress_status_code"] = recordedRouter.responseStatusCode
 
 				responseBytes, err = json.Marshal(&gechologData)
 				if err != nil {
@@ -201,13 +203,21 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 				return
 			}
 
+			egressStatusCodeExtract := gjson.Get(string(msg.Data), "egress_status_code")
+			egressStatusCode := egressStatusCodeExtract.String()
+			if egressStatusCode == "" {
+				slog.Error("egress_status_code not found")
+				return
+			}
+
 			// Store the response
 			slog.Debug("storing response", slog.String("gl_path", glPath))
 			config.m.Lock() // mutex lock since maps are not thread safe for writing
 			config.recordedRouters[glPath] = router{
-				glPath:          glPath,
-				responsePayload: json.RawMessage(egressPayload),
-				responseHeaders: json.RawMessage(egressHeaders),
+				glPath:             glPath,
+				responsePayload:    json.RawMessage(egressPayload),
+				responseHeaders:    json.RawMessage(egressHeaders),
+				responseStatusCode: json.RawMessage(egressStatusCode),
 			}
 			config.m.Unlock()
 
