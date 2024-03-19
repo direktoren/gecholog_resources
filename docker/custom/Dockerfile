@@ -17,8 +17,3 @@ COPY your_cert.pem /app/conf/cert.pem
 COPY your_key.pem /app/conf/key.pem
 COPY ca.cert /app/conf/ca.cert
 
-# 5380 gecholog 4222 8222 6222 nats
-EXPOSE 5380 4222 8222 6222
-
-# Run the start script.
-CMD ["./ginit", "-o", "/app/conf/ginit_config.json"]
