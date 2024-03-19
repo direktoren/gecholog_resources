@@ -82,6 +82,9 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 	}
 	defer nc.Close()
 
+	// Preallocate `enabledIndex` with a capacity equal to the total number of routers.
+	var enabledIndex = make([]int, 0, len(config.outboundRouters))
+
 	// Subscribe to the nats subject. This is where we get requests to process
 	sub, err := nc.QueueSubscribe(
 		config.natsSubject,
@@ -110,8 +113,8 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 			if errorCode > 0 {
 				// It's in context response. Let's process the error_code
 				if errorCode != 200 {
-					for i, r := range config.outboundRouters {
-						if r.glPath == glPath {
+					for i, _ := range config.outboundRouters {
+						if config.outboundRouters[i].glPath == glPath {
 							config.m.Lock()
 							config.outboundRouters[i].disabled = true
 							config.outboundRouters[i].errorTime = time.Now()
@@ -130,28 +133,37 @@ func do(ctx context.Context, cancel context.CancelFunc) {
 			}
 
 			// Load balance
-			enabledRouters := []router{}
-			for _, r := range config.outboundRouters {
-				if r.disabled {
-					if time.Since(r.errorTime).Minutes() > config.disabledTime {
+
+			// Reset the length of `enabledIndex` to 0, without affecting its capacity.
+			enabledIndex = enabledIndex[:0]
+
+			for i, _ := range config.outboundRouters {
+				if config.outboundRouters[i].disabled {
+					if time.Since(config.outboundRouters[i].errorTime).Minutes() > config.disabledTime {
 						config.m.Lock()
-						r.disabled = false
+						config.outboundRouters[i].disabled = false
 						config.m.Unlock()
-						slog.Warn("enabling router", slog.String("router", r.glPath))
+						slog.Warn("enabling router", slog.String("router", config.outboundRouters[i].glPath))
 					}
 				}
-				if !r.disabled {
-					enabledRouters = append(enabledRouters, r)
+				if !config.outboundRouters[i].disabled {
+					// Append to `enabledIndex` within its existing capacity.
+					enabledIndex = append(enabledIndex, i)
 				}
 			}
 
-			if len(enabledRouters) == 0 {
+			if len(enabledIndex) == 0 {
 				slog.Error("no routers available")
 				return
 			}
 
 			// Pick a router at random
-			glPath = enabledRouters[rand.IntN(len(enabledRouters))].glPath
+			selectedRouterIndex := enabledIndex[rand.IntN(len(enabledIndex))]
+			if selectedRouterIndex < 0 || selectedRouterIndex >= len(config.outboundRouters) {
+				slog.Error("invalid router index", slog.Int("index", selectedRouterIndex))
+				return
+			}
+			glPath = config.outboundRouters[selectedRouterIndex].glPath
 
 			var gechologData = make(map[string]json.RawMessage)
 			bytes, _ := json.Marshal(glPath)
@@ -196,6 +208,7 @@ func main() {
 	if disabledTime != "" {
 		config.disabledTime, _ = strconv.ParseFloat(disabledTime, 64)
 	}
+	slog.Debug("disabledTime", slog.Float64("minutes", config.disabledTime))
 
 	// Create context & sync
 	ctx, cancelFunction := context.WithCancel(context.Background())
