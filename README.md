@@ -44,7 +44,9 @@ Visit [gecholog.ai](https://www.gecholog.ai) and [docs.gecholog.ai](https://docs
 
 ## AWS
 
-Coming soon...
+- **bedrock-runtime**
+    - Example on how to use `gecholog` with AWS Bedrock Runtime API
+    - .py, .Dockerfile
 
 ## Docker
 
