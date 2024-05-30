@@ -9,11 +9,18 @@ param gechologApiKey string
 
 @description('OPTIONAL: outbound API Key for /restricted/ router')
 @secure()
-param aiServiceApiKey string 
+param aiServiceApiKey string
 
 @description('OPTIONAL: nats token')
 @secure()
 param natsToken string
+
+@description('OPTIONAL: gui secret')
+@secure()
+param guiSecret string
+
+@description('OPTIONAL: gui port (80 to disable, 8080 or custom to enable GUI)')
+param guiPort int
 
 @description('Storage Account Name')
 param storageAccountName string
@@ -90,13 +97,17 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
               protocol: 'TCP'
             }
             {
+              port: guiPort
+              protocol: 'TCP'
+            }
+            {
               port: 4222
               protocol: 'TCP'
             }
           ]
           resources: {
             requests: {
-              cpu: cpuCores 
+              cpu: cpuCores
               memoryInGB: memoryInGb
             }
           }
@@ -137,6 +148,10 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
               name: 'NATS_TOKEN'
               secureValue: natsToken
             }
+            {
+              name: 'GUI_SECRET'
+              secureValue: guiSecret
+            }
           ]
           volumeMounts: [
             {
@@ -159,6 +174,10 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
       ports: [
         {
           port: port
+          protocol: 'TCP'
+        }
+        {
+          port: guiPort
           protocol: 'TCP'
         }
         {
