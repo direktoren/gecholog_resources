@@ -24,6 +24,9 @@ git clone https://github.com/direktoren/gecholog_resources.git
 # Set the nats token (necessary for mock to connect to gecholog)
 export NATS_TOKEN=changeme
 
+# Set the gui secret to be able to gecholog web interface
+export GUI_SECRET=changeme
+
 # Replace this with the url to your LLM API
 export AISERVICE_API_BASE=https://your.openai.azure.com/
 ```
@@ -49,6 +52,7 @@ export DEPLOYMENT=your_deployment
 > NOTE: `gecholog` will obfuscate the `Api-Key` HTTP header by default. Read more at [docs.gecholog.ai](https://docs.gecholog.ai/latest).
 
 Send the request to the `/service/standard/` router:
+
 ```sh
 curl -sS -H "api-key: $AISERVICE_API_KEY" -H "Content-Type: application/json" -X POST -d '{
   "messages": [
@@ -176,6 +180,9 @@ request4 to /mock/service/capped/ returns answer2
 # Set the nats token (necessary for mock to connect to gecholog)
 export NATS_TOKEN=changeme
 
+# Set the gui secret to be able to gecholog web interface
+export GUI_SECRET=changeme
+
 # Replace this with the url to your LLM API
 export AISERVICE_API_BASE=https://your.openai.azure.com/
 ```
@@ -187,9 +194,10 @@ cd gecholog_resources/processors/mock
 docker network create gecholog
 
 # Spin up gecholog container
-docker run -d -p 5380:5380 -p 4222:4222 \
+docker run -d -p 5380:5380 -p 4222:4222 -p 8080:8080 \
   --network gecholog --name gecholog \
   --env NATS_TOKEN=$NATS_TOKEN \
+  --env GUI_SECRET=$GUI_SECRET \
   --env AISERVICE_API_BASE=$AISERVICE_API_BASE \
   gecholog/gecholog:latest
 

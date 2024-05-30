@@ -9,6 +9,7 @@ The `regex` custom processor uses regular expression to extract information from
 The environment variable `MATCH_JSON` toggles deserialization.
 
 ## Quick Start: Explore Regex Extraction
+
 ### 1. Clone this GitHub repo
 
 ```sh
@@ -20,6 +21,9 @@ git clone https://github.com/direktoren/gecholog_resources.git
 ```sh
 # Set the nats token (necessary for regex to connect to gecholog)
 export NATS_TOKEN=changeme
+
+# Set the gui secret to be able to gecholog web interface
+export GUI_SECRET=changeme
 
 # Replace this with the url to your LLM API
 export AISERVICE_API_BASE=https://your.openai.azure.com/
@@ -197,6 +201,7 @@ The `regex` processor has added the fields and deserialized the JSON object
   }
 }
 ```
+
 ## Usage
 
 ### Field Selection
@@ -207,13 +212,14 @@ The `regex` processor uses [gjson](https://github.com/tidwall/gjson) syntax to s
 
 `regex` uses regular expression to extract patterns from the response fields. `regex` is written in go and uses the [Re2 library Syntax](https://github.com/google/re2/wiki/Syntax).
 
-
 ### Start `gecholog` and `regex` manually
-
 
 ```sh
 # Set the nats token (necessary for regex to connect to gecholog)
 export NATS_TOKEN=changeme
+
+# Set the gui secret to be able to gecholog web interface
+export GUI_SECRET=changeme
 
 # Replace this with the url to your LLM API
 export AISERVICE_API_BASE=https://your.openai.azure.com/
@@ -224,9 +230,10 @@ export AISERVICE_API_BASE=https://your.openai.azure.com/
 docker network create gecholog
 
 # Spin up gecholog container
-docker run -d -p 5380:5380 -p 4222:4222 \
+docker run -d -p 5380:5380 -p 4222:4222 -p 8080:8080 \
   --network gecholog --name gecholog \
   --env NATS_TOKEN=$NATS_TOKEN \
+  --env GUI_SECRET=$GUI_SECRET \
   --env AISERVICE_API_BASE=$AISERVICE_API_BASE \
   gecholog/gecholog:latest
 
@@ -275,4 +282,3 @@ Example
 }
 
 ```
-

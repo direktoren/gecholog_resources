@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   gecholog:
@@ -9,8 +8,10 @@ services:
     ports:
       - 5380:5380
       - 4222:4222
+      - 8080:8080
     environment:
       - NATS_TOKEN=${NATS_TOKEN}
+      - GUI_SECRET=${GUI_SECRET}
       - AISERVICE_API_BASE=${AISERVICE_API_BASE}
     networks:
       - gecholog-network
