@@ -11,8 +11,6 @@
 
 # Requires export PASSWORD=<password>
 
-version: "2.2"
-
 services:
   gl-ek-dev-setup:
     image: gecholog/gl-ek-dev-setup:latest
@@ -62,9 +60,11 @@ services:
     ports:
       - 5380:5380
       - 4222:4222
+      - 8080:8080
     environment:
       - AISERVICE_API_BASE=${AISERVICE_API_BASE}
       - ELASTIC_PASSWORD=${PASSWORD}
+      - GUI_SECRET=${PASSWORD}
       - NATS_TOKEN=${PASSWORD}
       - NATS2LOG_LOGGER_SUBTOPIC=.logger
     healthcheck:
